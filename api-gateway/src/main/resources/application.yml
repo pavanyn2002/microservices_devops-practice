@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+logging:
+  level:
+    com.example.apigateway: DEBUG
+    org.springframework.web: DEBUG
+
+# Service URLs for routing
+services:
+  user-service: http://localhost:8081
+  product-service: http://localhost:8082
+  order-service: http://localhost:8083
+  inventory-service: http://localhost:8084
