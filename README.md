@@ -1,292 +1,201 @@
-# Spring Boot Microservices Sample Application
+# Spring Boot Microservices Sample
 
-A sample microservices-based application using Spring Boot with 5 independent services designed for DevOps practice. This application demonstrates core microservices patterns including service communication, API gateway routing, and independent data management.
+A comprehensive microservices architecture built with Spring Boot, demonstrating best practices for distributed systems including service communication, containerization, and API management.
 
-## Services Overview
+## Architecture Overview
 
-- **API Gateway** (Port 8080) - Single entry point for client requests with routing to backend services
-- **User Service** (Port 8081) - User account management (CRUD operations)
-- **Product Service** (Port 8082) - Product catalog management with category filtering
-- **Order Service** (Port 8083) - Order creation and management with user/product validation
-- **Inventory Service** (Port 8084) - Stock level management with reservation capabilities
+This project consists of 5 microservices:
 
-## Prerequisites
+- **API Gateway** (Port 8080) - Entry point for all client requests
+- **User Service** (Port 8084) - User management and authentication
+- **Product Service** (Port 8083) - Product catalog management
+- **Inventory Service** (Port 8081) - Stock and inventory tracking
+- **Order Service** (Port 8082) - Order processing and management
 
-- **Java 17** or higher
-- **Maven 3.6** or higher
-- **Git** (for cloning the repository)
-
-## Quick Start
-
-### 1. Clone and Build
-
-```bash
-git clone <repository-url>
-cd spring-microservices-sample
-
-# Build all services
-mvn clean install -f user-service/pom.xml
-mvn clean install -f product-service/pom.xml
-mvn clean install -f order-service/pom.xml
-mvn clean install -f inventory-service/pom.xml
-mvn clean install -f api-gateway/pom.xml
-```
-
-### 2. Start Services (Recommended Order)
-
-Start services in separate terminals in this order to ensure proper inter-service communication:
-
-```bash
-# Terminal 1 - User Service (required by Order Service)
-cd user-service
-mvn spring-boot:run
-
-# Terminal 2 - Product Service (required by Order Service)
-cd product-service
-mvn spring-boot:run
-
-# Terminal 3 - Inventory Service
-cd inventory-service
-mvn spring-boot:run
-
-# Terminal 4 - Order Service (depends on User and Product services)
-cd order-service
-mvn spring-boot:run
-
-# Terminal 5 - API Gateway (routes to all services)
-cd api-gateway
-mvn spring-boot:run
-```
-
-### 3. Verify Services are Running
-
-Check that all services are healthy:
-
-```bash
-# Individual service health checks
-curl http://localhost:8081/api/users/health
-curl http://localhost:8082/api/products/health
-curl http://localhost:8083/api/orders/health
-curl http://localhost:8084/api/inventory/health
-
-# Gateway health check (includes all services)
-curl http://localhost:8080/health
-```
-
-## API Endpoints
-
-### Via API Gateway (Recommended)
-
-All services can be accessed through the API Gateway at `http://localhost:8080`:
-
-```bash
-# Users
-GET    http://localhost:8080/api/users
-POST   http://localhost:8080/api/users
-GET    http://localhost:8080/api/users/{id}
-PUT    http://localhost:8080/api/users/{id}
-DELETE http://localhost:8080/api/users/{id}
-
-# Products
-GET    http://localhost:8080/api/products
-POST   http://localhost:8080/api/products
-GET    http://localhost:8080/api/products/{id}
-GET    http://localhost:8080/api/products/category/{category}
-PUT    http://localhost:8080/api/products/{id}
-DELETE http://localhost:8080/api/products/{id}
-
-# Orders
-GET    http://localhost:8080/api/orders
-POST   http://localhost:8080/api/orders
-GET    http://localhost:8080/api/orders/{id}
-GET    http://localhost:8080/api/orders/user/{userId}
-PUT    http://localhost:8080/api/orders/{id}?status=CONFIRMED
-DELETE http://localhost:8080/api/orders/{id}
-
-# Inventory
-GET    http://localhost:8080/api/inventory
-POST   http://localhost:8080/api/inventory
-GET    http://localhost:8080/api/inventory/{productId}
-PUT    http://localhost:8080/api/inventory/{productId}?stock=100
-POST   http://localhost:8080/api/inventory/{productId}/reserve
-POST   http://localhost:8080/api/inventory/{productId}/release
-DELETE http://localhost:8080/api/inventory/{productId}
-```
-
-### Direct Service Access
-
-Services can also be accessed directly:
-
-- **User Service**: http://localhost:8081/api/users
-- **Product Service**: http://localhost:8082/api/products
-- **Order Service**: http://localhost:8083/api/orders
-- **Inventory Service**: http://localhost:8084/api/inventory
-
-## Sample API Usage
-
-### 1. Create a User
-
-```bash
-curl -X POST http://localhost:8080/api/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "email": "john@example.com",
-    "firstName": "John",
-    "lastName": "Doe"
-  }'
-```
-
-### 2. Create a Product
-
-```bash
-curl -X POST http://localhost:8080/api/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Laptop",
-    "description": "Gaming laptop",
-    "price": 999.99,
-    "category": "Electronics"
-  }'
-```
-
-### 3. Add Inventory
-
-```bash
-curl -X POST http://localhost:8080/api/inventory \
-  -H "Content-Type: application/json" \
-  -d '{
-    "productId": 1,
-    "availableStock": 50
-  }'
-```
-
-### 4. Create an Order
-
-```bash
-curl -X POST http://localhost:8080/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": 1,
-    "orderItems": [
-      {
-        "productId": 1,
-        "quantity": 2
-      }
-    ]
-  }'
-```
-
-## Database Access
-
-Each service uses H2 in-memory database with web console access:
-
-- **User Service**: http://localhost:8081/h2-console
-- **Product Service**: http://localhost:8082/h2-console
-- **Order Service**: http://localhost:8083/h2-console
-- **Inventory Service**: http://localhost:8084/h2-console
-
-**Connection Details:**
-- JDBC URL: `jdbc:h2:mem:[servicename]db` (e.g., `jdbc:h2:mem:userdb`)
-- Username: `sa`
-- Password: (leave empty)
-
-## Architecture Details
-
-### Service Communication
-
-- **Synchronous Communication**: REST APIs over HTTP
-- **Order Service Integration**: Validates users via User Service and products via Product Service
-- **Error Handling**: Circuit breaker pattern with fallback responses
-- **Data Consistency**: Each service owns its data with eventual consistency
-
-### Technology Stack
+## Technology Stack
 
 - **Framework**: Spring Boot 3.2.0
 - **Java Version**: 17
-- **Database**: H2 (in-memory)
+- **Database**: H2 (in-memory for development)
 - **Build Tool**: Maven
-- **Communication**: REST APIs with RestTemplate
+- **Containerization**: Docker
+- **API Documentation**: Postman Collection included
+
+## Quick Start
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.6+
+- Docker (optional, for containerized deployment)
+
+### Running Locally
+
+1. Clone the repository
+```bash
+git clone https://github.com/pavanyn2002/microservices_devops-practice.git
+cd spring-boot-microservices-sample
+```
+
+2. Start each service (in separate terminals):
+```bash
+# API Gateway
+cd api-gateway && mvn spring-boot:run
+
+# User Service
+cd user-service && mvn spring-boot:run
+
+# Product Service
+cd product-service && mvn spring-boot:run
+
+# Inventory Service
+cd inventory-service && mvn spring-boot:run
+
+# Order Service
+cd order-service && mvn spring-boot:run
+```
+
+3. Access the services:
+- API Gateway: http://localhost:8080
+- User Service: http://localhost:8084
+- Product Service: http://localhost:8083
+- Inventory Service: http://localhost:8081
+- Order Service: http://localhost:8082
+
+### Running with Docker
+
+1. Build all services:
+```bash
+docker build -t api-gateway ./api-gateway
+docker build -t user-service ./user-service
+docker build -t product-service ./product-service
+docker build -t inventory-service ./inventory-service
+docker build -t order-service ./order-service
+```
+
+2. Run services:
+```bash
+docker run -p 8080:8080 api-gateway
+docker run -p 8084:8084 user-service
+docker run -p 8083:8083 product-service
+docker run -p 8081:8081 inventory-service
+docker run -p 8082:8082 order-service
+```
+
+## API Documentation
+
+### User Service Endpoints
+
+- `GET /api/users` - Get all users
+- `GET /api/users/{id}` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
+
+### Product Service Endpoints
+
+- `GET /api/products` - Get all products
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/{id}` - Update product
+- `DELETE /api/products/{id}` - Delete product
+
+### Inventory Service Endpoints
+
+- `GET /api/inventory` - Get all inventory items
+- `GET /api/inventory/{productId}` - Get inventory for product
+- `POST /api/inventory` - Create inventory item
+- `PUT /api/inventory/{id}` - Update inventory
+- `DELETE /api/inventory/{id}` - Delete inventory item
+
+### Order Service Endpoints
+
+- `GET /api/orders` - Get all orders
+- `GET /api/orders/{id}` - Get order by ID
+- `POST /api/orders` - Create new order
+- `PUT /api/orders/{id}` - Update order
+- `DELETE /api/orders/{id}` - Delete order
+
+### API Gateway Routes
+
+All requests should go through the API Gateway at `http://localhost:8080`:
+
+- `/users/**` → User Service
+- `/products/**` → Product Service
+- `/inventory/**` → Inventory Service
+- `/orders/**` → Order Service
 
 ## Testing
 
-### Unit Tests
+### Using Postman
 
-Run tests for individual services:
+Import the `postman-collection.json` file into Postman to test all endpoints with pre-configured requests.
+
+### Running Unit Tests
 
 ```bash
+# Test all services
+mvn test
+
+# Test specific service
 cd user-service && mvn test
-cd product-service && mvn test
-cd order-service && mvn test
-cd inventory-service && mvn test
 ```
 
-### Integration Testing
-
-Test the complete flow:
-
-1. Start all services
-2. Create test data using the sample API calls above
-3. Verify data consistency across services
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Port Already in Use**: Ensure no other applications are using ports 8080-8084
-2. **Service Communication Errors**: Start User and Product services before Order service
-3. **Database Connection Issues**: H2 databases are recreated on each restart
-
-### Logs
-
-Check application logs for debugging:
-
-```bash
-# Service logs show in the terminal where mvn spring-boot:run was executed
-# Look for ERROR or WARN level messages
-```
-
-## Development
-
-### Project Structure
+## Project Structure
 
 ```
-spring-microservices-sample/
-├── README.md
-├── user-service/          # User management service
-├── product-service/       # Product catalog service
-├── order-service/         # Order processing service
-├── inventory-service/     # Inventory management service
-└── api-gateway/          # API Gateway and routing
+spring-boot-microservices-sample/
+├── api-gateway/
+│   ├── src/main/java/com/example/gateway/
+│   ├── Dockerfile
+│   └── pom.xml
+├── user-service/
+│   ├── src/main/java/com/example/user/
+│   ├── Dockerfile
+│   └── pom.xml
+├── product-service/
+│   ├── src/main/java/com/example/product/
+│   ├── Dockerfile
+│   └── pom.xml
+├── inventory-service/
+│   ├── src/main/java/com/example/inventory/
+│   ├── Dockerfile
+│   └── pom.xml
+├── order-service/
+│   ├── src/main/java/com/example/order/
+│   ├── Dockerfile
+│   └── pom.xml
+├── docs/
+├── postman-collection.json
+└── README.md
 ```
 
-### Adding New Features
+## Configuration
 
-1. Each service is independent - modify only the relevant service
-2. Update API contracts carefully to maintain compatibility
-3. Add integration tests for new inter-service communication
-4. Update this README with new endpoints
+Each service uses Spring Boot's default configuration with H2 database. Configuration files are located in `src/main/resources/application.properties` for each service.
 
-## DevOps Ready
+## Development Guidelines
 
-This application is designed for DevOps practice and can be extended with:
-
-- **Containerization**: Docker and Docker Compose
-- **Orchestration**: Kubernetes manifests
-- **CI/CD**: Jenkins, GitHub Actions, or GitLab CI
-- **Monitoring**: Prometheus, Grafana, ELK stack
-- **Service Mesh**: Istio or Linkerd
-- **Configuration Management**: Spring Cloud Config
-- **Service Discovery**: Eureka or Consul
+- Each service is independently deployable
+- Services communicate via HTTP REST APIs
+- All requests go through the API Gateway
+- H2 database provides data persistence (development mode)
+- Follow RESTful API conventions
+- Use proper HTTP status codes
+- Implement proper error handling
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make changes to individual services
-4. Test thoroughly including inter-service communication
+3. Make your changes
+4. Add tests for new functionality
 5. Submit a pull request
 
 ## License
 
-This project is designed for educational and practice purposes.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For questions or issues, please create an issue in the repository or contact the development team.
